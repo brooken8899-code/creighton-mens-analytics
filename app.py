@@ -228,28 +228,44 @@ try:
         "This holds across all four years — it's not a one-season fluke."
     )
 
-    st.subheader("What goes with it: duels and crosses up in losses; build-up efficiency up in wins")
+    st.subheader("The Habits That Separate Wins from Losses")
     st.caption(
-        "Win/Loss averages below use only 2023–2025 (the current era) so the 2022 "
-        "blueprint season doesn't blend into — and skew — the baseline. 2022 is shown "
-        "as its own reference column for comparison instead."
+        "Each number below is a per-game average — take every match of that type "
+        "(e.g. every 2023–25 loss), average Wyscout's own per-match count for that "
+        "action across all of them, and that's the number shown. "
+        "Win/Loss averages use only 2023–2025 so the 2022 blueprint season doesn't "
+        "blend into — and skew — the baseline; 2022 is shown as its own column instead."
     )
     key_metrics = ["OffensiveDuels", "Crosses", "PenaltyAreaEntries_Crosses",
                    "PositionalAttacks_withShots_pct", "Fouls", "Losses_High"]
+    METRIC_LABELS = {
+        "OffensiveDuels": "Individual 1v1 Attacking Duels (per game)",
+        "Crosses": "Crosses Attempted (per game)",
+        "PenaltyAreaEntries_Crosses": "Box Entries via Cross (per game)",
+        "PositionalAttacks_withShots_pct": "Build-Up Possessions Ending in a Shot (%)",
+        "Fouls": "Fouls Committed (per game)",
+        "Losses_High": "Turnovers in the Attacking Third (per game)",
+    }
     current_era = df_full[df_full["Season"] != "2022"]
     blueprint_2022 = df_full[df_full["Season"] == "2022"]
 
     win_loss = current_era[current_era["Result"].isin(["Win", "Loss"])].groupby("Result")[key_metrics].mean().round(2).T
     win_loss.columns = ["Loss Avg (2023–25)", "Win Avg (2023–25)"]
-    win_loss["2022 Blueprint Avg"] = blueprint_2022[key_metrics].mean().round(2)
+    # Split 2022 by result too, the same way the current era is split — a single
+    # blended 2022 number would mix wins, draws, and losses together, which isn't
+    # a fair comparison against columns that ARE split by result.
+    blueprint_win_loss = blueprint_2022[blueprint_2022["Result"].isin(["Win", "Loss"])].groupby("Result")[key_metrics].mean().round(2)
+    win_loss["2022 Loss Avg"] = blueprint_win_loss.loc["Loss"] if "Loss" in blueprint_win_loss.index else float("nan")
+    win_loss["2022 Win Avg"] = blueprint_win_loss.loc["Win"] if "Win" in blueprint_win_loss.index else float("nan")
+    win_loss.index = [METRIC_LABELS[m] for m in win_loss.index]
     st.dataframe(win_loss, use_container_width=True)
     st.caption(
-        "Current-era losses lean on more individual offensive duels and more crosses into "
-        "the box — signs of forcing 1-on-1s rather than combination play. Current-era wins "
-        "show a higher shot-conversion rate on structured build-up attacks "
-        "(PositionalAttacks_withShots_pct). The 2022 column shows where the blueprint year "
-        "sat on each of these — useful for seeing which habits it shared with today's wins, "
-        "and which it didn't."
+        "Current-era losses involve more individual 1v1 duels and more crosses into "
+        "the box — signs of forcing things individually rather than combination play. "
+        "Current-era wins convert a bigger share of their structured build-up "
+        "possessions into an actual shot. The two 2022 columns are split by result the "
+        "same way, so you can compare like with like: 2022's wins against today's wins, "
+        "and 2022's losses against today's losses."
     )
 
     st.subheader("2022's real signature: creative passing volume, not just talent")
@@ -403,12 +419,18 @@ try:
     c1, c2 = st.columns(2)
     with c1:
         st.markdown(f"**What actually makes up '{AXIS1_NAME}':**")
-        st.caption("Stats that move together to form this axis — mainly passing and box-entry volume:")
-        st.dataframe(loadings["PC1"].sort_values(key=abs, ascending=False).head(6).round(2))
+        st.caption(
+            "Stats that move together to form this axis — mainly passing and box-entry "
+            "volume. These numbers look almost identical on purpose: all six are different "
+            "ways of counting the same underlying thing (how much Creighton passed the "
+            "ball forward), so they rise and fall together and PCA weighs them almost "
+            "equally. Shown to 3 decimals so you can see they're close, not identical."
+        )
+        st.dataframe(loadings["PC1"].sort_values(key=abs, ascending=False).head(6).round(3))
     with c2:
         st.markdown(f"**What actually makes up '{AXIS2_NAME}':**")
         st.caption("Stats that move together to form this axis — mainly shot and duel efficiency:")
-        st.dataframe(loadings["PC2"].sort_values(key=abs, ascending=False).head(6).round(2))
+        st.dataframe(loadings["PC2"].sort_values(key=abs, ascending=False).head(6).round(3))
 
     st.subheader("Key Takeaway")
     current_win_pc1 = current_df.loc[current_df["Result"] == "Win", "PC1"].mean()
@@ -458,3 +480,4 @@ st.markdown(
     f"<p style='color:{CU_BLUE}; font-size:0.85rem;'>Built by Brooke — Business Intelligence Analytics & Marketing, Creighton University</p>",
     unsafe_allow_html=True,
 )
+
