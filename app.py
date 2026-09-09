@@ -2,20 +2,9 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import os
-import base64
+from branding import CU_BLUE, CU_NAVY, CU_LIGHT_BLUE, CU_SILVER, RESULT_COLORS, section_header, page_banner, page_footer
 
 st.set_page_config(page_title="Creighton Bluejays — Multi-Season Analysis", layout="wide", page_icon="🔵")
-
-# Creighton Athletics brand colors (CU Royal Blue, CU Navy, CU Light Blue,
-# CU Silver Metallic). Win/Draw/Loss keep the traffic-light convention for
-# instant readability, but in deeper, more muted tones that sit alongside
-# navy/blue instead of clashing with it like generic bright web colors do.
-CU_BLUE = "#005CA9"
-CU_NAVY = "#00235D"
-CU_LIGHT_BLUE = "#6CADDE"
-CU_SILVER = "#8A8D8F"
-RESULT_COLORS = {"Win": "#2E7D32", "Draw": CU_SILVER, "Loss": "#9E2A2B"}
 
 # ---------------------------------------------------------------------------
 # LOAD DATA
@@ -39,27 +28,7 @@ df = df_all[df_all["Season"].isin(selected_seasons)].copy()
 # To show the official Bluejay logo: download it from Creighton Athletics'
 # brand assets (gocreighton.com) and save it as "logo.png" in this same
 # folder. This code will pick it up automatically. Skipped quietly if not found.
-# To show the official Bluejay logo: download it from Creighton Athletics'
-# brand assets (gocreighton.com) and save it as "logo.png" in this same
-# folder. This code will pick it up automatically. Skipped quietly if not found.
-if os.path.exists("logo.png"):
-    with open("logo.png", "rb") as f:
-        logo_b64 = base64.b64encode(f.read()).decode()
-    st.markdown(
-        f"""
-        <div style="display:flex; align-items:center; gap:24px; margin-bottom:8px;">
-            <img src="data:image/png;base64,{logo_b64}" style="width:130px; height:auto;">
-            <div>
-                <h1 style="color:{CU_NAVY}; margin:0; line-height:1.15;">Creighton Bluejays — Multi-Season Analysis</h1>
-                <p style="color:{CU_BLUE}; font-size:0.95rem; margin:4px 0 0 0;">Men's Soccer &middot; Team-Level Performance Analysis</p>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-else:
-    st.markdown(f"<h1 style='color:{CU_NAVY}; margin-bottom:0;'>Creighton Bluejays — Multi-Season Analysis</h1>", unsafe_allow_html=True)
-    st.markdown(f"<p style='color:{CU_BLUE}; font-size:0.95rem; margin-top:0;'>Men's Soccer &middot; Team-Level Performance Analysis</p>", unsafe_allow_html=True)
+page_banner("Creighton Bluejays — Multi-Season Analysis", "Men's Soccer &middot; Team-Level Performance Analysis")
 
 st.caption(
     f"What actually separates wins from losses across {len(df)} matches "
@@ -78,10 +47,6 @@ col1.metric("Record", f"{(df['Result']=='Win').sum()}W-{(df['Result']=='Draw').s
 col2.metric("Goals For", int(df["GoalsFor"].sum()))
 col3.metric("Goals Against", int(df["GoalsAgainst"].sum()))
 col4.metric("Total xG", round(df["xG"].sum(), 1))
-
-def section_header(text):
-    st.markdown(f"<h2 style='color:{CU_NAVY};'>{text}</h2>", unsafe_allow_html=True)
-
 
 st.markdown("---")
 
@@ -475,9 +440,4 @@ except ImportError:
 except FileNotFoundError:
     st.info("Add creighton_differentials.csv to this folder to see the style fingerprint.")
 
-st.markdown("---")
-st.markdown(
-    f"<p style='color:{CU_BLUE}; font-size:0.85rem;'>Built by Brooke — Business Intelligence Analytics & Marketing, Creighton University</p>",
-    unsafe_allow_html=True,
-)
-
+page_footer()
